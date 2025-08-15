@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: spek-api
+    env: python
+    region: frankfurt
+    plan: free
+    repo: "https://github.com/SpektrunBackend/renderRepo"
+    branch: master
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
