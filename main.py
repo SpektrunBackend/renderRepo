@@ -43,20 +43,17 @@ def ytdl(url: str, timeout: int = 60):
 
 
 @app.get("/ytdl_download")
-def ytdl_download(
-    url: str,
-    output_dir: str = "/tmp",
-    timeout: int = 600,
-    cookies: str = None  # Optional path to cookies.txt
-):
-    """Download video/audio via yt-dlp to server and return file path."""
+def ytdl_download(url: str, output_dir: str = "/tmp", timeout: int = 600):
+    """Download video/audio via yt-dlp using secret cookies file and return file path."""
     os.makedirs(output_dir, exist_ok=True)
     filename_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
-    cmd = ["yt-dlp", "-o", filename_template, url]
-    
-    if cookies:
-        cmd.extend(["--cookies", cookies])
+    cmd = [
+        "yt-dlp",
+        "-o", filename_template,
+        "--cookies", "/etc/secrets/cookies.txt",
+        url
+    ]
 
     try:
         subprocess.run(cmd, check=True, timeout=timeout)
