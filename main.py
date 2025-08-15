@@ -45,9 +45,21 @@ def ytdl(url: str, timeout: int = 60):
 
 
 @app.get("/spotdl")
-def spotdl_meta(url: str, timeout: int = 60):
-    """Run spotdl metadata command and return its stdout."""
+def spotdl_meta(
+    url: str = Query(..., description="Spotify track or playlist URL"),
+    timeout: int = 60
+):
+    """Run spotdl metadata command and return structured output."""
+    
+    # Validate input is a Spotify URL
+    if not url.startswith("https://open.spotify.com/"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only Spotify track or playlist URLs are supported."
+        )
+
     cmd = ["spotdl", "meta", url]
+
     try:
         result = subprocess.run(
             cmd,
@@ -56,6 +68,8 @@ def spotdl_meta(url: str, timeout: int = 60):
             check=True,
             timeout=timeout,
         )
+
+        # Optionally, parse output to JSON if spotdl supports JSON output
         return {"success": True, "output": result.stdout}
 
     except subprocess.CalledProcessError as e:
