@@ -14,6 +14,7 @@ import json
  
 app = FastAPI()
 
+
 @app.get("/ytdl")
 def ytdl(url: str, timeout: int = 60):
     """Run yt-dlp and return parsed JSON metadata when available.
