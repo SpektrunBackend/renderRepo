@@ -14,3 +14,11 @@ def ytdl(url: str):
         capture_output=True, text=True
     )
     return {"output": result.stdout}
+
+@app.get("/spotdl")
+def spotdl(url: str):
+    result = subprocess.run(
+        ["spotdl", "meta", url],
+        capture_output=True, text=True
+    )
+    return {"output": result.stdout}
