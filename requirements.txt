@@ -3,5 +3,5 @@ uvicorn[standard]
 yt-dlp
 spotdl
 python-dotenv
-streamlink
+
 
