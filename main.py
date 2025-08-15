@@ -43,25 +43,29 @@ def ytdl(url: str, timeout: int = 60):
 
 
 @app.get("/ytdl_download")
-def ytdl_download(url: str, output_dir: str = "/tmp", timeout: int = 600):
+def ytdl_download(
+    url: str,
+    output_dir: str = "/tmp",
+    timeout: int = 600,
+    cookies: str = None  # Optional path to cookies.txt
+):
     """Download video/audio via yt-dlp to server and return file path."""
+    os.makedirs(output_dir, exist_ok=True)
     filename_template = os.path.join(output_dir, "%(title)s.%(ext)s")
-    cmd = [
-        "yt-dlp",
-        "-o", filename_template,
-        url
-    ]
+
+    cmd = ["yt-dlp", "-o", filename_template, url]
+    
+    if cookies:
+        cmd.extend(["--cookies", cookies])
+
     try:
-        subprocess.run(
-            cmd,
-            check=True,
-            timeout=timeout
-        )
-        return {"success": True, "message": f"Downloaded to {output_dir}"}
+        subprocess.run(cmd, check=True, timeout=timeout)
+        return {"success": True, "file_path": filename_template}
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=e.stderr or str(e))
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=504, detail="yt-dlp command timed out")
+
 
 
 @app.get("/spotdl")
