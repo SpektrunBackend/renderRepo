@@ -73,37 +73,4 @@ def spotdl_meta(
         raise HTTPException(status_code=504, detail="spotdl command timed out")
 
 
-@app.get("/streamlink")
-def get_streamlink(url: str, quality: str = "best"):
-    """Get streaming URLs using Streamlink."""
-    try:
-        streams = streamlink.streams(url)
-        if not streams:
-            raise HTTPException(status_code=404, detail="No streams found for this URL")
-        if quality not in streams:
-            raise HTTPException(status_code=404, detail=f"Requested quality '{quality}' not available")
-        stream_url = streams[quality].url
-        return {"success": True, "stream_url": stream_url, "available_qualities": list(streams.keys())}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/hitomi_dl")
-def hitomi_dl(url: str = Query(..., description="Gallery URL"), timeout: int = 60):
-    """Download content using Hitomi Downloader CLI."""
-    cmd = ["hitomi_downloader_GUI.exe", url]
-
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=timeout
-        )
-        return {"success": True, "output": result.stdout}
-    except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=e.stderr or str(e))
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="Hitomi Downloader command timed out")
 
