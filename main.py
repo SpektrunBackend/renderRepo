@@ -42,26 +42,67 @@ def ytdl(url: str, timeout: int = 60):
         raise HTTPException(status_code=504, detail="yt-dlp command timed out")
 
 
+
+SECRET_COOKIES = "/etc/secrets/cookies.txt"  # your Render secret file (read-only)
+
 @app.get("/ytdl_download")
 def ytdl_download(url: str, output_dir: str = "/tmp", timeout: int = 600):
-    """Download video/audio via yt-dlp using secret cookies file and return file path."""
+    """
+    Download video/audio via yt-dlp using a writable temp copy of the secret cookies file.
+    Returns the output directory and the command stdout/stderr on success/failure.
+    """
     os.makedirs(output_dir, exist_ok=True)
     filename_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
-    cmd = [
-        "yt-dlp",
-        "-o", filename_template,
-        "--cookies", "/etc/secrets/cookies.txt",
-        url
-    ]
+    # Create a temporary directory and copy the cookies there so yt-dlp can write to it if needed.
+    tmpdir = tempfile.mkdtemp(prefix="ytcookies_")
+    temp_cookies = os.path.join(tmpdir, "cookies.txt")
 
     try:
-        subprocess.run(cmd, check=True, timeout=timeout)
-        return {"success": True, "file_path": filename_template}
-    except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=e.stderr or str(e))
+        # If secret exists, copy it. If not, proceed without cookies.
+        if os.path.exists(SECRET_COOKIES):
+            shutil.copy(SECRET_COOKIES, temp_cookies)
+            os.chmod(temp_cookies, 0o600)  # tighten perms
+            cookies_args = ["--cookies", temp_cookies]
+        else:
+            cookies_args = []
+
+        cmd = [
+            "yt-dlp",
+            "-o", filename_template,
+            *cookies_args,
+            url
+        ]
+
+        # Run yt-dlp
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+
+        if proc.returncode != 0:
+            # include stderr for debugging (but be careful exposing secrets in public)
+            raise HTTPException(status_code=500, detail=proc.stderr or proc.stdout or "yt-dlp failed")
+
+        # Success — return path template and stdout for confirmation
+        return {
+            "success": True,
+            "output_dir": output_dir,
+            "filename_template": filename_template,
+            "stdout": proc.stdout
+        }
+
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=504, detail="yt-dlp command timed out")
+    finally:
+        # Clean up the temporary cookie file/directory
+        try:
+            shutil.rmtree(tmpdir)
+        except Exception:
+            pass
+
 
 
 
