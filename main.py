@@ -21,8 +21,7 @@ def ytdl(url: str, timeout: int = 60):
         "--dump-single-json",
         url,
         "--cookies",
-        "/etc/secrets/cookies.txt",
-        "--no-write-cookies"  
+        "/etc/secrets/cookies.txt"
     ]
 
     try:
