@@ -21,13 +21,14 @@ def ytdl(url: str, timeout: int = 60):
     - `url` (str): the YouTube (or other) URL to inspect
     - `timeout` (int): how long to allow the command to run (seconds)
     """
-    cmd = [
-        "yt-dlp",
-        "--no-warnings",
-        "--dump-single-json",
-        url,
-        "--cookies",
-        "/etc/secrets/cookies.txt"  # use the secret cookies file from Render
+   cmd = [
+    "yt-dlp",
+    "--no-warnings",
+    "--dump-single-json",
+    url,
+    "--cookies",
+    "/etc/secrets/cookies.txt",
+    "--no-write-cookies"  
     ]
 
     try:
