@@ -1,6 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 import subprocess
 import json
+import streamlink
+from spotify_dl import SpotifyDL
 
 app = FastAPI()
 
@@ -10,11 +12,7 @@ def root():
 
 @app.get("/ytdl")
 def ytdl(url: str, timeout: int = 60):
-    """Run yt-dlp and return parsed JSON metadata when available.
-
-    - `url` (str): the YouTube (or other) URL to inspect
-    - `timeout` (int): how long to allow the command to run (seconds)
-    """
+    """Run yt-dlp and return parsed JSON metadata when available."""
     cmd = [
         "yt-dlp",
         "--no-warnings",
@@ -51,7 +49,6 @@ def spotdl_meta(
 ):
     """Run spotdl metadata command and return structured output."""
     
-    # Validate input is a Spotify URL
     if not url.startswith("https://open.spotify.com/"):
         raise HTTPException(
             status_code=400,
@@ -68,11 +65,38 @@ def spotdl_meta(
             check=True,
             timeout=timeout,
         )
-
-        # Optionally, parse output to JSON if spotdl supports JSON output
         return {"success": True, "output": result.stdout}
 
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=e.stderr or str(e))
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=504, detail="spotdl command timed out")
+
+
+@app.get("/streamlink")
+def get_streamlink(url: str, quality: str = "best"):
+    """Get streaming URLs using Streamlink."""
+    try:
+        streams = streamlink.streams(url)
+        if not streams:
+            raise HTTPException(status_code=404, detail="No streams found for this URL")
+        if quality not in streams:
+            raise HTTPException(status_code=404, detail=f"Requested quality '{quality}' not available")
+        stream_url = streams[quality].url
+        return {"success": True, "stream_url": stream_url, "available_qualities": list(streams.keys())}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/spotify_dl")
+def spotify_download(url: str = Query(..., description="Spotify track or playlist URL")):
+    """Download or fetch metadata for Spotify tracks using spotify_dl."""
+    if not url.startswith("https://open.spotify.com/"):
+        raise HTTPException(status_code=400, detail="Only Spotify URLs are supported.")
+
+    try:
+        sdl = SpotifyDL({})
+        tracks = sdl.download(url)
+        return {"success": True, "tracks": tracks}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
