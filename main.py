@@ -88,14 +88,10 @@ def get_streamlink(url: str, quality: str = "best"):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/spotify_dl")
-def spotify_download(url: str = Query(..., description="Spotify track or playlist URL"), timeout: int = 60):
-    """Fetch Spotify track/playlist metadata using spotify_dl CLI."""
-    
-    if not url.startswith("https://open.spotify.com/"):
-        raise HTTPException(status_code=400, detail="Only Spotify URLs are supported.")
-
-    cmd = ["spotify_dl", url]
+@app.get("/hitomi_dl")
+def hitomi_dl(url: str = Query(..., description="Gallery URL"), timeout: int = 60):
+    """Download content using Hitomi Downloader CLI."""
+    cmd = ["hitomi_downloader_GUI.exe", url]
 
     try:
         result = subprocess.run(
@@ -109,5 +105,5 @@ def spotify_download(url: str = Query(..., description="Spotify track or playlis
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=e.stderr or str(e))
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="spotify_dl command timed out")
+        raise HTTPException(status_code=504, detail="Hitomi Downloader command timed out")
 
