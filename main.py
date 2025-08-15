@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Query
 import subprocess
 import json
 import streamlink
-from spotify_dl import SpotifyDL
+
 
 app = FastAPI()
 
