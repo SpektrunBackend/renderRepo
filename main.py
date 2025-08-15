@@ -89,14 +89,25 @@ def get_streamlink(url: str, quality: str = "best"):
 
 
 @app.get("/spotify_dl")
-def spotify_download(url: str = Query(..., description="Spotify track or playlist URL")):
-    """Download or fetch metadata for Spotify tracks using spotify_dl."""
+def spotify_download(url: str = Query(..., description="Spotify track or playlist URL"), timeout: int = 60):
+    """Fetch Spotify track/playlist metadata using spotify_dl CLI."""
+    
     if not url.startswith("https://open.spotify.com/"):
         raise HTTPException(status_code=400, detail="Only Spotify URLs are supported.")
 
+    cmd = ["spotify_dl", url]
+
     try:
-        sdl = SpotifyDL({})
-        tracks = sdl.download(url)
-        return {"success": True, "tracks": tracks}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=timeout
+        )
+        return {"success": True, "output": result.stdout}
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=e.stderr or str(e))
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="spotify_dl command timed out")
+
