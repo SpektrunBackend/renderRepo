@@ -13,9 +13,9 @@
 6. Deploy. After deploy, test the root URL and endpoints.
 
 ## Example tests
-- Root: `GET https://<your-service>.onrender.com/`
-- ytdl: `GET https://<your-service>.onrender.com/ytdl?url=<video-url>`
-- spotdl: `GET https://<your-service>.onrender.com/spotdl?url=<spotify-or-youtube-url>`
+- Root: `GET [https://<your-service>.onrender.com/](https://spek-api.onrender.com)`
+- ytdl: `GET [https://<your-service>.onrender.com](https://spek-api.onrender.com)/ytdl?url=<video-url>`
+- spotdl: `GET [https://<your-service>.onrender.com](https://spek-api.onrender.com)/spotdl?url=<spotify-or-youtube-url>`
 
 ## Notes & warnings
 - Running `yt-dlp`/`spotdl` against copyrighted content may violate platform TOS.
