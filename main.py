@@ -8,6 +8,12 @@ app = FastAPI()
 def root():
     return {"message": "API is running"}
 
+from fastapi import FastAPI, HTTPException
+import subprocess
+import json
+
+app = FastAPI()
+
 @app.get("/ytdl")
 def ytdl(url: str, timeout: int = 60):
     """Run yt-dlp and return parsed JSON metadata when available.
@@ -15,7 +21,15 @@ def ytdl(url: str, timeout: int = 60):
     - `url` (str): the YouTube (or other) URL to inspect
     - `timeout` (int): how long to allow the command to run (seconds)
     """
-    cmd = ["yt-dlp", "--no-warnings", "--dump-single-json", url]
+    cmd = [
+        "yt-dlp",
+        "--no-warnings",
+        "--dump-single-json",
+        url,
+        "--cookies",
+        "/etc/secrets/cookies.txt"  # use the secret cookies file from Render
+    ]
+
     try:
         result = subprocess.run(
             cmd,
@@ -35,6 +49,7 @@ def ytdl(url: str, timeout: int = 60):
         raise HTTPException(status_code=500, detail=e.stderr or str(e))
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=504, detail="yt-dlp command timed out")
+
 
 
 @app.get("/spotdl")
